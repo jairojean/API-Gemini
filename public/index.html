@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interação com Gemini e Áudio com API Google TTS</title>
+    <style>
+        /* Estilos para o tema "hacker" */
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000;
+            color: #00FF00;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #00FF00;
+            text-shadow: 0 0 10px #00FF00;
+        }
+
+        /* Caixa de texto */
+        textarea {
+            width: 80%;
+            max-width: 600px;
+            height: 150px;
+            padding: 10px;
+            font-size: 1rem;
+            color: #00FF00;
+            background-color: #111;
+            border: 1px solid #00FF00;
+            border-radius: 5px;
+            resize: none;
+            box-shadow: 0 0 10px #00FF00;
+            margin-bottom: 20px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #00FF00;
+            box-shadow: 0 0 20px #00FF00;
+        }
+
+        /* Botão */
+        button {
+            background-color: #00FF00;
+            color: #000;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            padding: 15px 30px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            font-weight: bold;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px #00FF00;
+        }
+
+        button:hover {
+            background-color: #00cc00;
+            box-shadow: 0 0 20px #00FF00;
+        }
+
+        /* Barra de progresso */
+        .progress-bar-container {
+            width: 80%;
+            max-width: 600px;
+            height: 8px;
+            background-color: #333;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
+            width: 0;
+            height: 100%;
+            background-color: #00FF00;
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* Mensagens de erro */
+        .error {
+            color: red;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            text-shadow: 0 0 10px red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Interação com Gemini e Áudio com API Google TTS</h1>
+    
+    <textarea id="texto" placeholder="Digite o texto..."></textarea><br>
+    <button onclick="falar()">Enviar</button>
+
+    <div class="progress-bar-container">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
+
+    <p class="error" id="error-message"></p>
+
+    <script>
+        async function falar() {
+            const texto = document.getElementById('texto').value;
+            const progressBar = document.getElementById('progress-bar');
+            const errorMessage = document.getElementById('error-message');
+
+            // Limpa qualquer mensagem de erro
+            errorMessage.textContent = '';
+            progressBar.style.width = '0%';
+
+            if (!texto) {
+                alert('Por favor, insira um texto!');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/audio?texto=${encodeURIComponent(texto)}`);
+                
+                if (response.ok) {
+                    // Atualiza a barra de progresso enquanto o áudio é carregado
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += 10;
+                        progressBar.style.width = `${progress}%`;
+                        if (progress >= 100) {
+                            clearInterval(interval);
+                        }
+                    }, 100);
+
+                    const audioBlob = await response.blob();
+                    const audioUrl = URL.createObjectURL(audioBlob);
+                    const audio = new Audio(audioUrl);
+                    audio.play();
+                } else {
+                    throw new Error('Erro ao obter áudio do servidor');
+                }
+            } catch (error) {
+                console.error('Erro ao reproduzir o áudio:', error);
+                errorMessage.textContent = 'Ocorreu um erro ao gerar o áudio. Tente novamente mais tarde.';
+            }
+        }
+    </script>
+</body>
+</html>
